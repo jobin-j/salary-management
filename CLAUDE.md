@@ -23,6 +23,8 @@ Read `docs/REQUIREMENTS.md` for scope and `docs/DECISIONS.md` for decisions alre
 - Seed: `cd backend && uv run python -m app.seed`
 - Frontend dev: `cd frontend && npm run dev`
 - Frontend tests: `cd frontend && npm test`
+- Frontend lint: `cd frontend && npm run lint` (oxlint)
+- Frontend build: `cd frontend && npm run build` (includes type-check)
 
 ## Workflow rules
 1. **Test first.** Write a failing test, confirm it fails, write the minimum code to pass, then refactor.

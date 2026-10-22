@@ -38,3 +38,27 @@ kept, and what was corrected.
 - **Lesson:** Review every diff and read actual tool output rather than
   the agent's summary. I initially doubted the agent's httpx2 claim;
   the real warning text confirmed it.
+
+## 2026-10-22 — Frontend scaffold (Vite + React + TS + MUI + Vitest)
+- **Tool / model:** Claude Code, Sonnet 4.6
+- **Prompt:** Scaffold frontend/ with the react-ts template, MUI core
+  and Vitest + React Testing Library; failing test for a "Salary
+  Management" heading first, then the minimum code to pass. Remove
+  demo code.
+- **Corrections made:**
+  1. `vite.config.ts` imported `defineConfig` from 'vite' with
+     `globals: true`. The `test` block would be untyped and break
+     `tsc -b` in the build. Switched to 'vitest/config', globals off,
+     explicit vitest imports.
+  2. Setup file used plain `@testing-library/jest-dom`, which needs a
+     global `expect`. Switched to `@testing-library/jest-dom/vitest`.
+  3. With globals off, RTL's auto-cleanup doesn't run, so DOM would leak
+     between tests. Added explicit `afterEach(() => cleanup())`.
+- **Outcome:** Red: test command failed against the Vite demo App (which
+  has a "Get started" heading, not "Salary Management"); error text not
+  captured. Green: 1 passed in 703ms; oxlint 0 warnings; `tsc -b && vite
+  build` succeeds.
+- **Lesson:** One decision (`globals: false`) had three knock-on effects
+  the agent didn't follow through. Config choices need to be traced
+  through every file they touch. Also: capture red-step output
+  immediately (Ctrl+O) rather than relying on the agent's summary.

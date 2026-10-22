@@ -27,3 +27,13 @@
 - **Alternatives:** pip + venv with pinned requirements.txt (familiar,
   but lockfile management is manual).
 - **Trade-off:** Small learning curve.
+
+## 006 — Global styles: MUI CssBaseline, no custom CSS
+- **Why:** Template demo CSS removed; CssBaseline is MUI's standard
+  browser-style reset, keeping all styling in one system.
+- **Trade-off:** Small bundle increase; negligible at this stage.
+
+## 007 — Frontend linter: oxlint (template default)
+- **Why:** Ships with the current Vite react-ts template; fast, zero
+  configuration needed for this project's size.
+- **Alternatives:** ESLint (more plugins and rules, more setup).
