@@ -27,7 +27,7 @@ Read `docs/REQUIREMENTS.md` for scope and `docs/DECISIONS.md` for decisions alre
 - Frontend build: `cd frontend && npm run build` (includes type-check)
 
 ## Workflow rules
-1. **Test first.** Write a failing test, confirm it fails, write the minimum code to pass, then refactor.
+1. **Test first, one behaviour at a time.** Write one test, run it and show it failing, write the minimum code to pass, refactor, then move to the next test. Never write a batch of tests before implementing.
 2. **One small task at a time.** Stop after each task so it can be reviewed and committed.
 3. **Ask before** adding a dependency, changing the database schema, or touching files outside the current task.
 4. **No speculative features.** Build only what the current task requires.
@@ -35,3 +35,4 @@ Read `docs/REQUIREMENTS.md` for scope and `docs/DECISIONS.md` for decisions alre
 6. Never load all employees into memory or the browser; list endpoints are always paginated.
 7. Commit messages follow Conventional Commits (`feat:`, `test:`, `fix:`, `refactor:`, `docs:`, `chore:`).
 8. At the end of each task, propose a short `docs/AI_LOG.md` entry (task, prompt summary, outcome). Do not write it yourself — the developer edits and commits it.
+9. Manage Python dependencies only with `uv add` / `uv remove`; never edit dependency lists in `pyproject.toml` by hand.
