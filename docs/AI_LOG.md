@@ -62,3 +62,36 @@ kept, and what was corrected.
   the agent didn't follow through. Config choices need to be traced
   through every file they touch. Also: capture red-step output
   immediately (Ctrl+O) rather than relying on the agent's summary.
+
+## 2026-10-22 — Employee model and POST /employees
+- **Tool / model:** Claude Code, Sonnet 4.6
+- **Prompt:** Database setup, Employee model and POST /employees (create
+  only), test-first one behaviour at a time. Design decisions given up
+  front (decisions 008–010).
+- **Corrections made:**
+  1. Agent planned to write all five tests before implementing any.
+     Stopped it; enforced one test → red → green at a time.
+  2. Agent hand-edited pyproject.toml again; switched to `uv add`.
+     Both rules then added to CLAUDE.md.
+  3. Test fixture used `with TestClient(app)`, which runs app startup
+     and would create a real salary.db during tests. Removed the
+     with-block; verified no .db file appears after a test run.
+  4. `main.py` omitted `create_all` entirely. Tests passed (fixture
+     creates its own tables) but the real app would have no table.
+     Added a lifespan handler; verified manually via /docs (POST
+     returned 201 with currency INR).
+  5. Schema used `EmailStr` with no test driving it. Switched to plain
+     `str`, then added an invalid-email test later and reintroduced
+     `EmailStr` against a red test.
+  6. Router error detail was just "FR"; made it readable
+     ("Unsupported country: FR") and chained with `from e`.
+  7. Strengthened the unsupported-country test to assert the detail
+     message, since any 422 would otherwise pass it.
+  8. Salary rule implemented as a `field_validator`; replaced with
+     `Field(gt=0)` (one line, visible in the OpenAPI schema).
+- **Red steps:** create `404 == 201`; unsupported country
+  `KeyError: 'FR'`; salary `201 == 422`; hire date, duplicate email and
+  invalid email confirmed red by the agent, output not captured.
+- **Outcome:** 7 tests passing (6 employee + health), ruff clean.
+- **Lesson:** Tests can pass while the real app is broken (correction 4).
+  Behaviour the tests can't see needs a manual check.
