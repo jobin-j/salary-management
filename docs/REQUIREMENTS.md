@@ -16,7 +16,10 @@ Replace ACME's spreadsheet-based salary management with a web application that l
 - Browse employees in a paginated table (server-side, never loading all 10,000 rows into the browser).
 - Search by name; filter by country, job title and department.
 - Add, edit and delete an employee, with validation (required fields, salary greater than zero).
-- Employee fields: full name, job title, department, country, currency, annual salary, hire date. *(Pending confirmation — Q3)*
+- Employee fields: full name, email (unique), job title, department,
+  country, currency (derived from country), employment type
+  (full-time / part-time / contract), annual salary, hire date.
+  *(Pending confirmation — Q3)*
 - Salary is stored in the employee's local currency (ISO 4217 code).
 
 ### 2. Salary insights
