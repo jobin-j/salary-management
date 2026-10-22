@@ -13,3 +13,17 @@
 ## 003 — Salaries stored in local currency, no FX conversion
 - **Why:** Within-country comparison is accurate; FX adds rate-source
   and date decisions. *(Pending Incubyte's answer to Q1)*
+
+## 004 — UI components: MUI + MUI X DataGrid (free)
+- **Why:** The employee table needs server-side pagination, sorting and
+  filtering over 10,000 rows; DataGrid's server mode handles this with
+  minimal custom code.
+- **Alternatives:** shadcn/ui + TanStack Table (more control, more code).
+- **Trade-off:** Heavier bundle, more generic look.
+
+## 005 — Python packages: uv
+- **Why:** Lockfile (`uv.lock`) gives reproducible installs across
+  machines and deployment; manages the virtual environment automatically.
+- **Alternatives:** pip + venv with pinned requirements.txt (familiar,
+  but lockfile management is manual).
+- **Trade-off:** Small learning curve.
