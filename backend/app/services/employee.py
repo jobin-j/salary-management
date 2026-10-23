@@ -3,7 +3,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.models.employee import Employee
-from app.schemas.employee import EmployeeCreate
+from app.schemas.employee import EmployeeCreate, EmployeeUpdate
 
 COUNTRY_CURRENCY: dict[str, str] = {
     "IN": "INR",
@@ -25,10 +25,19 @@ class DuplicateEmailError(ValueError):
     pass
 
 
-def create_employee(db: Session, data: EmployeeCreate) -> Employee:
-    currency = COUNTRY_CURRENCY.get(data.country)
+class EmployeeNotFoundError(LookupError):
+    pass
+
+
+def _currency_for(country: str) -> str:
+    currency = COUNTRY_CURRENCY.get(country)
     if currency is None:
-        raise UnsupportedCountryError(data.country)
+        raise UnsupportedCountryError(country)
+    return currency
+
+
+def create_employee(db: Session, data: EmployeeCreate) -> Employee:
+    currency = _currency_for(data.country)
     employee = Employee(
         full_name=data.full_name,
         email=data.email,
@@ -48,6 +57,35 @@ def create_employee(db: Session, data: EmployeeCreate) -> Employee:
         raise DuplicateEmailError(data.email) from e
     db.refresh(employee)
     return employee
+
+
+def get_employee(db: Session, employee_id: int) -> Employee:
+    employee = db.get(Employee, employee_id)
+    if employee is None:
+        raise EmployeeNotFoundError(employee_id)
+    return employee
+
+
+def update_employee(db: Session, employee_id: int, data: EmployeeUpdate) -> Employee:
+    employee = get_employee(db, employee_id)
+    changes = data.model_dump(exclude_unset=True)
+    if "country" in changes:
+        changes["currency"] = _currency_for(changes["country"])
+    for field, value in changes.items():
+        setattr(employee, field, value)
+    try:
+        db.commit()
+    except IntegrityError as e:
+        db.rollback()
+        raise DuplicateEmailError(changes.get("email")) from e
+    db.refresh(employee)
+    return employee
+
+
+def delete_employee(db: Session, employee_id: int) -> None:
+    employee = get_employee(db, employee_id)
+    db.delete(employee)
+    db.commit()
 
 
 def list_employees(

@@ -4,12 +4,21 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.schemas.employee import EmployeeCreate, EmployeeListResponse, EmployeeResponse
+from app.schemas.employee import (
+    EmployeeCreate,
+    EmployeeListResponse,
+    EmployeeResponse,
+    EmployeeUpdate,
+)
 from app.services.employee import (
     DuplicateEmailError,
+    EmployeeNotFoundError,
     UnsupportedCountryError,
     create_employee,
+    delete_employee,
+    get_employee,
     list_employees,
+    update_employee,
 )
 
 router = APIRouter(prefix="/employees", tags=["employees"])
@@ -45,3 +54,33 @@ def list_employees_endpoint(
         job_title=job_title,
     )
     return EmployeeListResponse(items=items, total=total, page=page, page_size=page_size)
+
+
+@router.get("/{employee_id}", response_model=EmployeeResponse)
+def get_employee_endpoint(employee_id: int, db: Annotated[Session, Depends(get_db)]):
+    try:
+        return get_employee(db, employee_id)
+    except EmployeeNotFoundError as e:
+        raise HTTPException(status_code=404, detail=f"Employee not found: {e}") from e
+
+
+@router.patch("/{employee_id}", response_model=EmployeeResponse)
+def update_employee_endpoint(
+    employee_id: int, data: EmployeeUpdate, db: Annotated[Session, Depends(get_db)]
+):
+    try:
+        return update_employee(db, employee_id, data)
+    except EmployeeNotFoundError as e:
+        raise HTTPException(status_code=404, detail=f"Employee not found: {e}") from e
+    except UnsupportedCountryError as e:
+        raise HTTPException(status_code=422, detail=f"Unsupported country: {e}") from e
+    except DuplicateEmailError as e:
+        raise HTTPException(status_code=409, detail=f"Email already exists: {e}") from e
+
+
+@router.delete("/{employee_id}", status_code=204)
+def delete_employee_endpoint(employee_id: int, db: Annotated[Session, Depends(get_db)]):
+    try:
+        delete_employee(db, employee_id)
+    except EmployeeNotFoundError as e:
+        raise HTTPException(status_code=404, detail=f"Employee not found: {e}") from e

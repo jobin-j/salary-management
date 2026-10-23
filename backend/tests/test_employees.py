@@ -140,3 +140,95 @@ def test_list_employees_page_size_zero_returns_422(client):
     assert response.status_code == 422
     fields = [e["loc"][-1] for e in response.json()["detail"]]
     assert "page_size" in fields
+
+
+def test_get_employee_returns_employee(client):
+    created = make_employee(client)
+    response = client.get(f"/employees/{created['id']}")
+    assert response.status_code == 200
+    assert response.json() == created
+
+
+def test_get_employee_unknown_id_returns_404(client):
+    response = client.get("/employees/999")
+    assert response.status_code == 404
+
+
+def test_patch_employee_salary_changes_only_salary(client):
+    created = make_employee(client)
+    response = client.patch(f"/employees/{created['id']}", json={"annual_salary": 1_200_000})
+    assert response.status_code == 200
+    assert response.json() == {**created, "annual_salary": 1_200_000}
+    assert client.get(f"/employees/{created['id']}").json() == {**created, "annual_salary": 1_200_000}
+
+
+def test_patch_employee_country_rederives_currency(client):
+    created = make_employee(client, country="IN")
+    response = client.patch(f"/employees/{created['id']}", json={"country": "US"})
+    assert response.status_code == 200
+    assert response.json()["country"] == "US"
+    assert response.json()["currency"] == "USD"
+
+
+def test_patch_employee_unsupported_country_returns_422(client):
+    created = make_employee(client)
+    response = client.patch(f"/employees/{created['id']}", json={"country": "FR"})
+    assert response.status_code == 422
+    assert response.json()["detail"] == "Unsupported country: FR"
+
+
+def test_patch_employee_duplicate_email_returns_409(client):
+    first = make_employee(client)
+    second = make_employee(client)
+    response = client.patch(f"/employees/{second['id']}", json={"email": first["email"]})
+    assert response.status_code == 409
+
+
+def test_patch_employee_explicit_null_returns_422(client):
+    created = make_employee(client)
+    response = client.patch(f"/employees/{created['id']}", json={"full_name": None})
+    assert response.status_code == 422
+    fields = [e["loc"][-1] for e in response.json()["detail"]]
+    assert "full_name" in fields
+
+
+def test_patch_employee_non_positive_salary_returns_422(client):
+    created = make_employee(client)
+    response = client.patch(f"/employees/{created['id']}", json={"annual_salary": 0})
+    assert response.status_code == 422
+    fields = [e["loc"][-1] for e in response.json()["detail"]]
+    assert "annual_salary" in fields
+
+
+def test_patch_employee_future_hire_date_returns_422(client):
+    created = make_employee(client)
+    response = client.patch(f"/employees/{created['id']}", json={"hire_date": "2099-01-01"})
+    assert response.status_code == 422
+    fields = [e["loc"][-1] for e in response.json()["detail"]]
+    assert "hire_date" in fields
+
+
+def test_patch_employee_unknown_id_returns_404(client):
+    response = client.patch("/employees/999", json={"annual_salary": 1_200_000})
+    assert response.status_code == 404
+
+
+def test_delete_employee_returns_204_and_removes_employee(client):
+    created = make_employee(client)
+    response = client.delete(f"/employees/{created['id']}")
+    assert response.status_code == 204
+    assert response.content == b""
+    assert client.get(f"/employees/{created['id']}").status_code == 404
+
+
+def test_delete_employee_unknown_id_returns_404(client):
+    response = client.delete("/employees/999")
+    assert response.status_code == 404
+
+
+def test_patch_employee_invalid_email_returns_422(client):
+    created = make_employee(client)
+    response = client.patch(f"/employees/{created['id']}", json={"email": "not-an-email"})
+    assert response.status_code == 422
+    fields = [e["loc"][-1] for e in response.json()["detail"]]
+    assert "email" in fields

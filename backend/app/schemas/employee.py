@@ -1,8 +1,18 @@
 from datetime import date
+from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
+from pydantic import AfterValidator, BaseModel, ConfigDict, EmailStr, Field
 
 from app.models.employee import EmploymentType
+
+
+def _not_in_future(v: date) -> date:
+    if v > date.today():
+        raise ValueError("hire_date cannot be in the future")
+    return v
+
+
+HireDate = Annotated[date, AfterValidator(_not_in_future)]
 
 
 class EmployeeCreate(BaseModel):
@@ -13,14 +23,20 @@ class EmployeeCreate(BaseModel):
     country: str
     employment_type: EmploymentType
     annual_salary: int = Field(gt=0)
-    hire_date: date
+    hire_date: HireDate
 
-    @field_validator("hire_date")
-    @classmethod
-    def hire_date_not_in_future(cls, v: date) -> date:
-        if v > date.today():
-            raise ValueError("hire_date cannot be in the future")
-        return v
+
+class EmployeeUpdate(BaseModel):
+    # Non-nullable types with a None default: Pydantic doesn't validate defaults,
+    # so omitted fields stay unset, while an explicit null is rejected with 422.
+    full_name: str = None
+    email: EmailStr = None
+    job_title: str = None
+    department: str = None
+    country: str = None
+    employment_type: EmploymentType = None
+    annual_salary: int = Field(default=None, gt=0)
+    hire_date: HireDate = None
 
 
 class EmployeeResponse(BaseModel):

@@ -123,3 +123,23 @@ kept, and what was corrected.
 - **Outcome:** 16 tests passing, ruff clean.
 - **Lesson:** Verify advice against the tools, including a reviewer's.
   Linter defaults vary by version; ruff's own output settled it.
+
+## 2026-10-23 — Read, update, delete (GET / PATCH / DELETE /employees/{id})
+- **Tool / model:** Claude Code, Sonnet 4.6
+- **Prompt:** 12 behaviours per decision 012, one at a time. Included a
+  test for explicit null on PATCH, anticipating that a null would hit
+  the NOT NULL constraint and be misreported as a duplicate email.
+- **What happened:** All 12 tests went red then green. The explicit-null
+  test exposed exactly that bug (a null returned 409 "Email already
+  exists"); fixed so it returns 422. Agent added a 13th test (invalid
+  email on PATCH) so `EmailStr` on update is covered; kept it.
+- **Refactors:** Hire-date rule became one shared `HireDate` type used by
+  create and update; country lookup became a shared `_currency_for()`.
+- **Corrections made:** Agent's proposed commit message credited
+  "Claude Opus 5.5"; Claude Code ran on Sonnet 4.6. Dropped the trailer;
+  AI involvement is documented here instead.
+- **Trade-off noted:** Update fields use `str = None` (non-nullable type,
+  None default) so explicit null fails validation while omitted fields
+  stay unset. A type checker would flag it; the alternative was a model
+  validator, more code for the same behaviour.
+- **Outcome:** 29 tests passing, ruff clean.
