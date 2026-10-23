@@ -87,3 +87,18 @@
   currency) with a random spread, so insights show real patterns. Base
   figures are illustrative, not market data.
 - **Target:** full seed in under 5 seconds.
+
+## 014 — Insights: salary statistics per country and per job title
+- **Endpoints:** `GET /insights/countries` (headcount, min, max, mean,
+  median per country) and `GET /insights/countries/{country}/job-titles`
+  (same statistics per job title within one country). All figures in
+  local currency; no cross-country totals (decision 009).
+- **Full-time only by default:** part-time pay is pro-rated, so mixing it
+  in skews averages. An `employment_type` query parameter overrides.
+- **Median alongside mean:** salaries are skewed by high earners; median
+  shows typical pay more honestly.
+- **Median computed in Python** (`statistics.median`): SQLite has no
+  median function; this keeps one code path for SQLite and Postgres.
+  Loads only the salary column, never full employee records, so it
+  stays within the spirit of the "never load all employees" rule.
+- **Trade-off:** at much larger scale, use Postgres `percentile_cont`.
