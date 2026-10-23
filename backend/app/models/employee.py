@@ -20,9 +20,9 @@ class Employee(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     full_name: Mapped[str] = mapped_column(String(255), nullable=False)
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
-    job_title: Mapped[str] = mapped_column(String(255), nullable=False)
-    department: Mapped[str] = mapped_column(String(255), nullable=False)
-    country: Mapped[str] = mapped_column(String(2), nullable=False)
+    job_title: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    department: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    country: Mapped[str] = mapped_column(String(2), nullable=False, index=True)
     currency: Mapped[str] = mapped_column(String(3), nullable=False)
     employment_type: Mapped[EmploymentType] = mapped_column(
         SAEnum(EmploymentType, native_enum=False, length=20), nullable=False

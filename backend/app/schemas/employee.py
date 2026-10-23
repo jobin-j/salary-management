@@ -36,3 +36,10 @@ class EmployeeResponse(BaseModel):
     employment_type: EmploymentType
     annual_salary: int
     hire_date: date
+
+
+class EmployeeListResponse(BaseModel):
+    items: list[EmployeeResponse]
+    total: int
+    page: int
+    page_size: int

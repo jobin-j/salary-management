@@ -1,3 +1,5 @@
+import itertools
+
 VALID_PAYLOAD = {
     "full_name": "Alice Smith",
     "email": "alice@example.com",
@@ -50,3 +52,91 @@ def test_create_employee_returns_201_with_derived_currency(client):
     assert data["email"] == "alice@example.com"
     assert data["currency"] == "INR"
     assert isinstance(data["id"], int)
+
+
+_email_counter = itertools.count()
+
+
+def make_employee(client, **overrides):
+    payload = {**VALID_PAYLOAD, "email": f"employee{next(_email_counter)}@example.com", **overrides}
+    response = client.post("/employees", json=payload)
+    assert response.status_code == 201
+    return response.json()
+
+
+def test_list_employees_returns_page_and_total(client):
+    for _ in range(3):
+        make_employee(client)
+    response = client.get("/employees", params={"page_size": 2})
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data["items"]) == 2
+    assert data["total"] == 3
+    assert data["page"] == 1
+    assert data["page_size"] == 2
+
+
+def test_list_employees_second_page_returns_remaining_item(client):
+    created = [make_employee(client) for _ in range(3)]
+    response = client.get("/employees", params={"page": 2, "page_size": 2})
+    data = response.json()
+    assert [e["id"] for e in data["items"]] == [created[2]["id"]]
+    assert data["total"] == 3
+    assert data["page"] == 2
+
+
+def test_list_employees_filters_by_country(client):
+    make_employee(client, country="IN")
+    us = make_employee(client, country="US")
+    response = client.get("/employees", params={"country": "US"})
+    data = response.json()
+    assert [e["id"] for e in data["items"]] == [us["id"]]
+    assert data["total"] == 1
+
+
+def test_list_employees_combines_filters(client):
+    match = {"country": "US", "department": "Engineering", "job_title": "Engineer"}
+    target = make_employee(client, **match)
+    make_employee(client, **{**match, "country": "IN"})
+    make_employee(client, **{**match, "department": "Sales"})
+    make_employee(client, **{**match, "job_title": "Manager"})
+    response = client.get("/employees", params=match)
+    data = response.json()
+    assert [e["id"] for e in data["items"]] == [target["id"]]
+    assert data["total"] == 1
+
+
+def test_list_employees_search_is_case_insensitive_substring(client):
+    alice = make_employee(client, full_name="Alice Smith")
+    make_employee(client, full_name="Bob Jones")
+    response = client.get("/employees", params={"search": "ali"})
+    data = response.json()
+    assert [e["id"] for e in data["items"]] == [alice["id"]]
+    assert data["total"] == 1
+
+
+def test_list_employees_page_size_above_100_returns_422(client):
+    response = client.get("/employees", params={"page_size": 101})
+    assert response.status_code == 422
+    fields = [e["loc"][-1] for e in response.json()["detail"]]
+    assert "page_size" in fields
+
+
+def test_list_employees_search_treats_percent_literally(client):
+    make_employee(client)
+    response = client.get("/employees", params={"search": "%"})
+    assert response.json()["total"] == 0
+
+
+def test_list_employees_page_zero_returns_422(client):
+    response = client.get("/employees", params={"page": 0})
+    assert response.status_code == 422
+    fields = [e["loc"][-1] for e in response.json()["detail"]]
+    assert "page" in fields
+
+
+def test_list_employees_page_size_zero_returns_422(client):
+    response = client.get("/employees", params={"page_size": 0})
+    assert response.status_code == 422
+    fields = [e["loc"][-1] for e in response.json()["detail"]]
+    assert "page_size" in fields

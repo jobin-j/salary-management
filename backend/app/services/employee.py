@@ -1,3 +1,4 @@
+from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -47,3 +48,28 @@ def create_employee(db: Session, data: EmployeeCreate) -> Employee:
         raise DuplicateEmailError(data.email) from e
     db.refresh(employee)
     return employee
+
+
+def list_employees(
+    db: Session,
+    page: int,
+    page_size: int,
+    search: str | None = None,
+    country: str | None = None,
+    department: str | None = None,
+    job_title: str | None = None,
+) -> tuple[list[Employee], int]:
+    query = select(Employee)
+    if search is not None:
+        query = query.where(Employee.full_name.icontains(search, autoescape=True))
+    if country is not None:
+        query = query.where(Employee.country == country)
+    if department is not None:
+        query = query.where(Employee.department == department)
+    if job_title is not None:
+        query = query.where(Employee.job_title == job_title)
+    total = db.scalar(select(func.count()).select_from(query.subquery()))
+    items = db.scalars(
+        query.order_by(Employee.id).offset((page - 1) * page_size).limit(page_size)
+    ).all()
+    return list(items), total

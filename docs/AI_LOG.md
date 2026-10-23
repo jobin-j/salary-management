@@ -95,3 +95,31 @@ kept, and what was corrected.
 - **Outcome:** 7 tests passing (6 employee + health), ruff clean.
 - **Lesson:** Tests can pass while the real app is broken (correction 4).
   Behaviour the tests can't see needs a manual check.
+
+## 2026-10-23 — Employee list (GET /employees)
+- **Tool / model:** Claude Code, Sonnet 4.6
+- **Prompt:** Paginated, filterable GET /employees per decision 011:
+  page/page_size (max 100), case-insensitive name search, exact filters
+  on country/department/job_title, indexes on filtered columns. Six
+  tests, one at a time.
+- **Process change:** Approved agent steps without per-step review to
+  save time; reviewed the full `git diff` before committing instead.
+- **Corrections made:**
+  1. Search built an `ilike` pattern from raw input, so `%` matched every
+     employee and `_` matched any character. Added a failing test
+     (`assert 1 == 0`), fixed with `icontains(search, autoescape=True)`.
+  2. Minimum-of-1 limits on page/page_size had no tests. Added two guard
+     tests (passed on first run, as expected).
+  3. My chat advisor said a `# noqa: B008` comment was unused; removing
+     it made ruff fail, and the agent showed B008 is active in ruff's
+     defaults. Resolved by switching `db` to FastAPI's `Annotated` style,
+     removing both suppressions instead of adding a config exception.
+- **Agent-reported TDD deviation:** Offset logic was written during test
+  1, so test 2 passed on first run. Agent removed the offset to confirm
+  test 2 fails without it (`[1, 2] == [3]`), then restored it.
+- **Red steps:** list `405`; country, combined filters and search
+  returned too many items; page_size 101 returned `200` instead of 422;
+  `%` search `assert 1 == 0`.
+- **Outcome:** 16 tests passing, ruff clean.
+- **Lesson:** Verify advice against the tools, including a reviewer's.
+  Linter defaults vary by version; ruff's own output settled it.
