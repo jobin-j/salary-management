@@ -1,15 +1,4 @@
-import itertools
-
-VALID_PAYLOAD = {
-    "full_name": "Alice Smith",
-    "email": "alice@example.com",
-    "job_title": "Engineer",
-    "department": "Engineering",
-    "country": "IN",
-    "employment_type": "full_time",
-    "annual_salary": 1_000_000,
-    "hire_date": "2024-01-15",
-}
+from tests.helpers import VALID_PAYLOAD, make_employee
 
 
 def test_create_employee_unsupported_country_returns_422(client):
@@ -52,16 +41,6 @@ def test_create_employee_returns_201_with_derived_currency(client):
     assert data["email"] == "alice@example.com"
     assert data["currency"] == "INR"
     assert isinstance(data["id"], int)
-
-
-_email_counter = itertools.count()
-
-
-def make_employee(client, **overrides):
-    payload = {**VALID_PAYLOAD, "email": f"employee{next(_email_counter)}@example.com", **overrides}
-    response = client.post("/employees", json=payload)
-    assert response.status_code == 201
-    return response.json()
 
 
 def test_list_employees_returns_page_and_total(client):

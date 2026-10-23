@@ -164,3 +164,24 @@ kept, and what was corrected.
   untouched.
 - **Outcome:** 35 tests passing, ruff clean, 10,000 employees seeded in
   0.14s (target: under 5s).
+
+## 2026-10-23 — Salary insights (per country, per job title)
+- **Tool / model:** Claude Code, Sonnet 4.6
+- **Prompt:** Two insights endpoints per decision 014, with an
+  employment-type filter (full-time by default); seven tests with exact
+  expected numbers; then time both endpoints against 10,000 seeded
+  employees.
+- **What happened:** Tests 1, 2, 3, 5 and 6 went red then green. Tests 4
+  and 7 passed on first run; to prove test 4 detects a wrong median, the
+  agent briefly swapped in `median_high` (it failed: 300001 == 250000),
+  then reverted.
+- **Corrections made:** The insights service imported the private
+  `_currency_for` from another module; renamed it to `currency_for` now
+  that it's shared. A supported country with no employees had no test;
+  added a guard test.
+- **Performance:** at 10,000 employees, median response 8–19 ms per
+  endpoint (target: under 500 ms).
+- **Noted, left as is:** halves round to the nearest even number
+  (Python's `round`), pinned by test 4. `app/seed.py` doesn't match
+  `ruff format`; left for a separate clean-up commit.
+- **Outcome:** 43 tests passing, ruff clean.

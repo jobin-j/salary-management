@@ -29,7 +29,7 @@ class EmployeeNotFoundError(LookupError):
     pass
 
 
-def _currency_for(country: str) -> str:
+def currency_for(country: str) -> str:
     currency = COUNTRY_CURRENCY.get(country)
     if currency is None:
         raise UnsupportedCountryError(country)
@@ -37,7 +37,7 @@ def _currency_for(country: str) -> str:
 
 
 def create_employee(db: Session, data: EmployeeCreate) -> Employee:
-    currency = _currency_for(data.country)
+    currency = currency_for(data.country)
     employee = Employee(
         full_name=data.full_name,
         email=data.email,
@@ -70,7 +70,7 @@ def update_employee(db: Session, employee_id: int, data: EmployeeUpdate) -> Empl
     employee = get_employee(db, employee_id)
     changes = data.model_dump(exclude_unset=True)
     if "country" in changes:
-        changes["currency"] = _currency_for(changes["country"])
+        changes["currency"] = currency_for(changes["country"])
     for field, value in changes.items():
         setattr(employee, field, value)
     try:
