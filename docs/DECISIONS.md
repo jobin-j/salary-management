@@ -102,3 +102,16 @@
   Loads only the salary column, never full employee records, so it
   stays within the spirit of the "never load all employees" rule.
 - **Trade-off:** at much larger scale, use Postgres `percentile_cont`.
+
+## 015 — Frontend integration: CORS and a filter-options endpoint
+- **CORS:** allowed origins come from a `CORS_ORIGINS` environment
+  variable (comma-separated), defaulting to `http://localhost:5173`.
+  No wildcard, so only known frontends can call the API.
+- **`GET /options`:** returns supported countries (from the currency
+  mapping), departments and job titles (distinct values in the
+  database) and employment types. Dropdowns and forms use it, so the
+  backend stays the single source of valid values.
+- **Separate path, not `/employees/options`:** that would collide with
+  `/employees/{employee_id}`, which would try to read "options" as an id.
+- **Trade-off:** departments and job titles come from existing data, so
+  a new one appears in filters only once an employee has it.
