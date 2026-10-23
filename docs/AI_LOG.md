@@ -185,3 +185,22 @@ kept, and what was corrected.
   (Python's `round`), pinned by test 4. `app/seed.py` doesn't match
   `ruff format`; left for a separate clean-up commit.
 - **Outcome:** 43 tests passing, ruff clean.
+
+## 2026-10-23 — CORS and filter options (GET /options)
+- **Tool / model:** Claude Code, Sonnet 4.6
+- **Prompt:** CORS origins from a `CORS_ORIGINS` env var via a testable
+  parser, no wildcard; `GET /options` returning countries with
+  currencies, departments, job titles and employment types, per
+  decision 015. Six tests one at a time.
+- **What happened:** Tests 1, 3, 4 and 5 went red then green. Tests 2
+  and 6 passed on first run; the agent proved test 2 works by briefly
+  switching to a wildcard origin (it failed), then reverted.
+- **Corrections made:** Added a parser test for trailing slashes and
+  empty entries. An origin pasted from a hosting dashboard as
+  `https://app.example/` would never match the browser's
+  `https://app.example`, making every API call fail silently in
+  production. Written test first.
+- **Noted:** a blank `CORS_ORIGINS` now blocks all cross-origin requests
+  rather than falling back to the default. This fails closed, which is
+  the safe direction.
+- **Outcome:** 50 tests passing, ruff clean.
