@@ -143,3 +143,24 @@ kept, and what was corrected.
   stay unset. A type checker would flag it; the alternative was a model
   validator, more code for the same behaviour.
 - **Outcome:** 29 tests passing, ruff clean.
+
+## 2026-10-23 — Seed script (10,000 employees)
+- **Tool / model:** Claude Code, Sonnet 4.6
+- **Prompt:** Pure `generate_employees(count, seed)` plus `seed_database`
+  per decision 013; six tests one at a time. Required a fixed reference
+  date instead of `date.today()` so output stays deterministic.
+- **What happened:** All six tests went red then green. For the
+  title-to-department test, the agent wrote the expected mapping out in
+  the test rather than importing it from seed.py, so the test checks
+  something independent.
+- **Corrections made:** Titles were picked uniformly, giving as many
+  managers as engineers, which no real company looks like. Added title
+  weights (Engineering about 41% of headcount); a re-run landed every
+  title within 0.4 points of its target.
+- **Not covered by tests:** country and employment-type weights, base
+  salaries, the ±15% spread, part-time pro-rating and the hire-date
+  range. Verified in a 10,000-row run instead (e.g. IN 3,495 / US 2,002;
+  8,489 full-time). The run used a scratch database so local data was
+  untouched.
+- **Outcome:** 35 tests passing, ruff clean, 10,000 employees seeded in
+  0.14s (target: under 5s).
