@@ -65,3 +65,13 @@
 - **Indexes:** on country, department and job_title, the filtered columns.
 - **Trade-off:** Offset pagination slows on very deep pages at large
   scale; fine at 10,000 rows. Keyset pagination would be the upgrade path.
+
+## 012 — Read, update, delete: GET / PATCH / DELETE /employees/{id}
+- **PATCH, not PUT:** HR edits usually change one field (most often
+  salary); partial updates avoid resending the whole record.
+- **Same rules as create:** salary > 0, hire date not in the future,
+  valid email, unique email (409). Changing country re-derives currency,
+  so decision 009 holds on update too.
+- **Hard delete, returns 204.** Unknown id returns 404 on all three.
+- **Trade-off:** No audit trail of past values or deletions; salary
+  history is out of scope pending Incubyte's answer (Q5).
