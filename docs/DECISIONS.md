@@ -75,3 +75,15 @@
 - **Hard delete, returns 204.** Unknown id returns 404 on all three.
 - **Trade-off:** No audit trail of past values or deletions; salary
   history is out of scope pending Incubyte's answer (Q5).
+
+## 013 — Seed data: deterministic generator, standard library, bulk insert
+- **Design:** pure `generate_employees(count, seed)` (no database) plus a
+  CLI script that clears the table and bulk-inserts in one transaction.
+- **Deterministic:** fixed seed, same 10,000 employees every run; tests
+  use small counts.
+- **No Faker:** curated name lists per country using Python's `random`;
+  one less dependency. Trade-off: less name variety.
+- **Realistic pay:** base salary per job title per country (local
+  currency) with a random spread, so insights show real patterns. Base
+  figures are illustrative, not market data.
+- **Target:** full seed in under 5 seconds.
