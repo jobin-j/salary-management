@@ -115,3 +115,21 @@
   `/employees/{employee_id}`, which would try to read "options" as an id.
 - **Trade-off:** departments and job titles come from existing data, so
   a new one appears in filters only once an employee has it.
+
+## 016 — Employee table: server-driven DataGrid with a custom toolbar
+- **API access:** a small fetch-based client; base URL from
+  `VITE_API_URL` (default `http://localhost:8000`). TanStack Query
+  handles caching, loading and error states.
+- **DataGrid in server mode:** pagination drives `page` / `page_size`;
+  only the current page is ever in the browser (CLAUDE.md rule 6).
+- **Column sorting disabled:** the grid holds one page, so sorting would
+  only reorder those rows while looking like a full sort. The API has
+  no sort parameter; ordering is by id.
+- **Custom filter toolbar:** search box plus country, department and job
+  title dropdowns populated from `GET /options`, mapping directly to the
+  API's query parameters.
+- **Debounced search (300 ms):** avoids an API call per keystroke.
+- **Display:** salaries via `Intl.NumberFormat` in each row's currency;
+  country names via `Intl.DisplayNames`, with no hard-coded name list.
+- **Tests:** stub `fetch`, so tests exercise the API client too, without
+  adding a mocking library.
