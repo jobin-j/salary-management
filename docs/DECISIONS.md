@@ -54,3 +54,14 @@
   need minor units, and some currencies (e.g. JPY) have none.
 - **Trade-off:** No fractional amounts; revisit if monthly or hourly
   pay is introduced.
+
+## 011 — Employee list: offset pagination, filters, case-insensitive search
+- **Pagination:** `page` + `page_size` (default 20, max 100), ordered by
+  `id` so results are deterministic. Response includes `total` for the
+  table's page count.
+- **Filters:** exact match on country, department, job title; name search
+  is case-insensitive substring match (`ilike`), which behaves the same
+  on SQLite and Postgres (plain `LIKE` does not).
+- **Indexes:** on country, department and job_title, the filtered columns.
+- **Trade-off:** Offset pagination slows on very deep pages at large
+  scale; fine at 10,000 rows. Keyset pagination would be the upgrade path.
