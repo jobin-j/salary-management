@@ -311,3 +311,20 @@ kept, and what was corrected.
   in UTC, so between 00:00 and 05:30 IST a hire date of today is
   rejected. Rare; noted rather than fixed.
 - **Outcome:** 20 frontend tests passing, oxlint clean, build succeeds.
+
+## 2026-10-26 — Newest-first list and ID column
+- **Tool / model:** Claude Code, Sonnet 4.6
+- **Origin:** found while manually testing the forms. A new employee
+  landed on the last page (around page 500), so the HR manager couldn't
+  see what they had just added. Recorded as decision 019, superseding
+  011's ordering.
+- **What happened:** test first on both sides. The backend test failed
+  with `[1, 2, 3] != [3, 2, 1]`, then passed with id-descending
+  ordering; the existing second-page test was updated to expect the
+  oldest employee on page 2, keeping what it checks. The frontend test
+  failed because the first column was "Name", then passed with a
+  narrow ID column first.
+- **Verified manually:** a newly added employee appears at the top of
+  page 1.
+- **Outcome:** 60 backend and 21 frontend tests passing; ruff, oxlint
+  and build clean.

@@ -118,6 +118,14 @@ describe('EmployeesPage', () => {
     expect(screen.getByText('India')).toBeInTheDocument()
   })
 
+  it('shows each employee’s id in an ID column', async () => {
+    renderPage()
+
+    const row = (await screen.findByText('Priya Sharma')).closest('[role="row"]') as HTMLElement
+    expect(screen.getAllByRole('columnheader')[0]).toHaveTextContent('ID')
+    expect(within(row).getAllByRole('gridcell')[0]).toHaveTextContent('1')
+  })
+
   it('refetches the first page with the selected country', async () => {
     const user = userEvent.setup()
     renderPage()

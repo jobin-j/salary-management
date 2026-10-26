@@ -15,6 +15,7 @@ import EmployeeFiltersToolbar from './EmployeeFiltersToolbar'
 import EmployeeFormDialog from './EmployeeFormDialog'
 
 const dataColumns: GridColDef<Employee>[] = [
+  { field: 'id', headerName: 'ID', type: 'number', width: 80 },
   { field: 'full_name', headerName: 'Name', flex: 1, minWidth: 160 },
   { field: 'email', headerName: 'Email', flex: 1, minWidth: 200 },
   { field: 'job_title', headerName: 'Job title', flex: 1, minWidth: 140 },

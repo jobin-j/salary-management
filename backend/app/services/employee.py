@@ -108,6 +108,6 @@ def list_employees(
         query = query.where(Employee.job_title == job_title)
     total = db.scalar(select(func.count()).select_from(query.subquery()))
     items = db.scalars(
-        query.order_by(Employee.id).offset((page - 1) * page_size).limit(page_size)
+        query.order_by(Employee.id.desc()).offset((page - 1) * page_size).limit(page_size)
     ).all()
     return list(items), total

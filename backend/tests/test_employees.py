@@ -55,11 +55,18 @@ def test_list_employees_returns_page_and_total(client):
     assert data["page_size"] == 2
 
 
+def test_list_employees_returns_newest_first(client):
+    created = [make_employee(client) for _ in range(3)]
+    response = client.get("/employees")
+    ids = [e["id"] for e in response.json()["items"]]
+    assert ids == [e["id"] for e in reversed(created)]
+
+
 def test_list_employees_second_page_returns_remaining_item(client):
     created = [make_employee(client) for _ in range(3)]
     response = client.get("/employees", params={"page": 2, "page_size": 2})
     data = response.json()
-    assert [e["id"] for e in data["items"]] == [created[2]["id"]]
+    assert [e["id"] for e in data["items"]] == [created[0]["id"]]
     assert data["total"] == 3
     assert data["page"] == 2
 
