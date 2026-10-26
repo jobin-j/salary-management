@@ -11,6 +11,7 @@ and per-job-title statistics in local currency.
 
 - App: https://salary-management-app-ivory.vercel.app
 - API docs: https://salary-management-weld.vercel.app/docs
+- Demo video (6.5 min): https://drive.google.com/file/d/1c_kh841yJakN-z8-PIz9u1tCgwUfXZX4/view?usp=sharing
 
 Both run on serverless functions, so the first request after a period
 of inactivity may take a few seconds.
