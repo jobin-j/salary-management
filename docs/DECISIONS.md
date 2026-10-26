@@ -179,3 +179,16 @@
   employees share a name.
 - **Trade-off:** no user-selectable sorting yet; that would need a sort
   parameter in the API.
+
+## 020 — Insights page and navigation
+- **Country summary table:** headcount, min, median, mean and max per
+  country, each in local currency. Selecting a country shows its
+  per-job-title breakdown below.
+- **No cross-country chart:** mixing currencies on one axis would be
+  meaningless (decision 009). A per-title chart within one country is a
+  possible later addition.
+- **Employment type:** full-time by default, with a selector for other
+  types (decision 014).
+- **Navigation:** MUI tabs (Employees / Insights), no router. Insights
+  is lazy-loaded, which also splits the bundle. Trade-off: no shareable
+  link per page; acceptable for a two-page internal tool.
