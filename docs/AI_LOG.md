@@ -271,3 +271,21 @@ kept, and what was corrected.
   minimal.
 - **Outcome:** live at https://salary-management-app-ivory.vercel.app
   (API: https://salary-management-weld.vercel.app).
+
+## 2026-10-26 — CORS for write requests (backend fix)
+- **Tool / model:** Claude Code, Sonnet 4.6
+- **Found by:** the agent, while building the employee forms. Decision
+  015 (my chat advisor's design) set only `allow_origins`; Starlette's
+  defaults then allow only GET and no request headers, so the browser's
+  preflight check would reject every POST, PATCH and DELETE with a JSON
+  body. All tests passed, because tests don't go through a browser.
+- **Fix:** test first. A preflight test from http://localhost:5173
+  failed with 400, then passed after setting `allow_methods` (GET, POST,
+  PATCH, DELETE) and `allow_headers` (Content-Type).
+- **Verified manually:** create, edit, delete and the duplicate-email
+  error all worked in a real browser against the local backend.
+- **Pattern:** third time green tests hid a real-world failure (after
+  the missing `create_all` and the CORS trailing slash). Each was caught
+  by running the real thing, which is why every task now ends with a
+  manual check.
+- **Outcome:** 59 backend tests passing, ruff clean.
