@@ -1,6 +1,6 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vitest'
+import { render, screen, waitFor, within } from '@testing-library/react'
+import userEvent, { type UserEvent } from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { Employee } from '../api/employees'
 import EmployeesPage from './EmployeesPage'
@@ -28,25 +28,69 @@ const options = {
   employment_types: ['full_time', 'part_time', 'contract'],
 }
 
-let fetchMock: ReturnType<typeof vi.fn>
+let fetchMock: Mock<(input: string, init?: RequestInit) => Promise<Response>>
 
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status })
 }
 
 function stubApi() {
-  fetchMock = vi.fn(async (input: string) => {
+  fetchMock = vi.fn(async (input: string, init?: RequestInit) => {
     const url = new URL(input)
     if (url.pathname === '/options') return jsonResponse(options)
+    if (init?.method === 'POST') return jsonResponse({ id: 2, currency: 'USD', ...JSON.parse(String(init.body)) }, 201)
+    if (init?.method === 'PATCH') return jsonResponse({ ...priya, ...JSON.parse(String(init.body)) })
+    if (init?.method === 'DELETE') return new Response(null, { status: 204 })
     return jsonResponse({ items: [priya], total: 100, page: 1, page_size: 20 })
   })
   vi.stubGlobal('fetch', fetchMock)
 }
 
+/** Keeps reads working but answers every write with an error response. */
+function rejectWritesWith(status: number, body: unknown) {
+  const respond = fetchMock.getMockImplementation()!
+  fetchMock.mockImplementation(async (input: string, init?: RequestInit) =>
+    init?.method && init.method !== 'GET' ? jsonResponse(body, status) : respond(input, init),
+  )
+}
+
 function employeesRequests() {
   return fetchMock.mock.calls
+    .filter(([, init]) => (init?.method ?? 'GET') === 'GET')
     .map(([input]) => new URL(input))
     .filter((url) => url.pathname === '/employees')
+}
+
+function writeRequests() {
+  return fetchMock.mock.calls
+    .filter(([, init]) => init?.method && init.method !== 'GET')
+    .map(([input, init]) => ({
+      method: init?.method,
+      path: new URL(input).pathname,
+      body: init?.body ? JSON.parse(String(init.body)) : undefined,
+    }))
+}
+
+async function chooseOption(user: UserEvent, container: HTMLElement, label: string, option: string) {
+  await user.click(within(container).getByRole('combobox', { name: label }))
+  await user.click(await screen.findByRole('option', { name: option }))
+}
+
+async function fillNewEmployee(user: UserEvent, dialog: HTMLElement) {
+  await user.type(within(dialog).getByRole('textbox', { name: 'Full name' }), 'Alex Kim')
+  await user.type(within(dialog).getByRole('textbox', { name: 'Email' }), 'alex@example.com')
+  await user.type(within(dialog).getByRole('combobox', { name: 'Job title' }), 'Designer')
+  await user.type(within(dialog).getByRole('combobox', { name: 'Department' }), 'Design')
+  await chooseOption(user, dialog, 'Country', 'United States')
+  await chooseOption(user, dialog, 'Employment type', 'part time')
+  await user.type(within(dialog).getByRole('spinbutton', { name: 'Annual salary' }), '90000')
+  await user.type(within(dialog).getByLabelText('Hire date'), '2024-01-15')
+}
+
+async function openAddDialog(user: UserEvent) {
+  await screen.findByText('Priya Sharma')
+  await user.click(screen.getByRole('button', { name: 'Add employee' }))
+  return screen.findByRole('dialog', { name: 'Add employee' })
 }
 
 function lastEmployeesQuery() {
@@ -106,5 +150,156 @@ describe('EmployeesPage', () => {
     renderPage()
 
     expect(await screen.findByRole('alert')).toHaveTextContent(/could not load employees/i)
+  })
+
+  it('creates an employee, closes the dialog and refreshes the list', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    const dialog = await openAddDialog(user)
+    const listRequestsBefore = employeesRequests().length
+
+    await fillNewEmployee(user, dialog)
+    await user.click(within(dialog).getByRole('button', { name: 'Save' }))
+
+    await waitFor(() => expect(dialog).not.toBeInTheDocument())
+    expect(writeRequests()).toEqual([
+      {
+        method: 'POST',
+        path: '/employees',
+        body: {
+          full_name: 'Alex Kim',
+          email: 'alex@example.com',
+          job_title: 'Designer',
+          department: 'Design',
+          country: 'US',
+          employment_type: 'part_time',
+          annual_salary: 90000,
+          hire_date: '2024-01-15',
+        },
+      },
+    ])
+    await waitFor(() => expect(employeesRequests().length).toBeGreaterThan(listRequestsBefore))
+    expect(screen.getByText('Employee added')).toBeInTheDocument()
+  })
+
+  it('shows a field error for invalid input and sends no request', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    const dialog = await openAddDialog(user)
+
+    await fillNewEmployee(user, dialog)
+    await user.clear(within(dialog).getByRole('spinbutton', { name: 'Annual salary' }))
+    await user.type(within(dialog).getByRole('spinbutton', { name: 'Annual salary' }), '0')
+    await user.click(within(dialog).getByRole('button', { name: 'Save' }))
+
+    expect(within(dialog).getByRole('spinbutton', { name: 'Annual salary' })).toHaveAccessibleDescription(
+      'Salary must be greater than 0',
+    )
+    expect(writeRequests()).toEqual([])
+  })
+
+  it('shows a 409 response as an error on the email field', async () => {
+    const user = userEvent.setup()
+    rejectWritesWith(409, { detail: 'Email already exists: alex@example.com' })
+    renderPage()
+    const dialog = await openAddDialog(user)
+
+    await fillNewEmployee(user, dialog)
+    await user.click(within(dialog).getByRole('button', { name: 'Save' }))
+
+    await waitFor(() =>
+      expect(within(dialog).getByRole('textbox', { name: 'Email' })).toHaveAccessibleDescription(
+        'An employee with this email already exists',
+      ),
+    )
+    expect(dialog).toBeInTheDocument()
+  })
+
+  it('shows a 422 error on the field the response identifies', async () => {
+    const user = userEvent.setup()
+    rejectWritesWith(422, {
+      detail: [{ loc: ['body', 'hire_date'], msg: 'Value error, hire_date cannot be in the future' }],
+    })
+    renderPage()
+    const dialog = await openAddDialog(user)
+
+    await fillNewEmployee(user, dialog)
+    await user.click(within(dialog).getByRole('button', { name: 'Save' }))
+
+    await waitFor(() =>
+      expect(within(dialog).getByLabelText('Hire date')).toHaveAccessibleDescription(
+        'Value error, hire_date cannot be in the future',
+      ),
+    )
+  })
+
+  it('shows a 422 error that names no field as a general message in the dialog', async () => {
+    const user = userEvent.setup()
+    rejectWritesWith(422, { detail: 'Unsupported country: US' })
+    renderPage()
+    const dialog = await openAddDialog(user)
+
+    await fillNewEmployee(user, dialog)
+    await user.click(within(dialog).getByRole('button', { name: 'Save' }))
+
+    expect(await within(dialog).findByRole('alert')).toHaveTextContent('Unsupported country: US')
+  })
+
+  it('pre-fills the edit form and sends only the changed fields', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await screen.findByText('Priya Sharma')
+
+    await user.click(screen.getByRole('button', { name: 'Edit Priya Sharma' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Edit employee' })
+    expect(within(dialog).getByRole('textbox', { name: 'Full name' })).toHaveValue('Priya Sharma')
+    expect(within(dialog).getByRole('combobox', { name: 'Department' })).toHaveValue('Engineering')
+    expect(within(dialog).getByRole('combobox', { name: 'Country' })).toHaveTextContent('India')
+    expect(within(dialog).getByLabelText('Hire date')).toHaveValue('2022-04-01')
+
+    const salary = within(dialog).getByRole('spinbutton', { name: 'Annual salary' })
+    expect(salary).toHaveValue(1500000)
+    await user.clear(salary)
+    await user.type(salary, '1600000')
+    await user.click(within(dialog).getByRole('button', { name: 'Save' }))
+
+    await waitFor(() => expect(dialog).not.toBeInTheDocument())
+    expect(writeRequests()).toEqual([{ method: 'PATCH', path: '/employees/1', body: { annual_salary: 1600000 } }])
+    expect(screen.getByText('Employee updated')).toBeInTheDocument()
+  })
+
+  it('shows the chosen country’s currency read-only', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    const dialog = await openAddDialog(user)
+
+    await chooseOption(user, dialog, 'Country', 'United States')
+
+    const currency = within(dialog).getByRole('textbox', { name: 'Currency' })
+    expect(currency).toHaveValue('USD')
+    expect(currency).toHaveAttribute('readonly')
+  })
+
+  it('deletes an employee only after confirmation, then refreshes the list', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await screen.findByText('Priya Sharma')
+
+    await user.click(screen.getByRole('button', { name: 'Delete Priya Sharma' }))
+    const cancelled = await screen.findByRole('dialog', { name: 'Delete employee?' })
+    await user.click(within(cancelled).getByRole('button', { name: 'Cancel' }))
+    await waitFor(() => expect(cancelled).not.toBeInTheDocument())
+    expect(writeRequests()).toEqual([])
+
+    const listRequestsBefore = employeesRequests().length
+    await user.click(screen.getByRole('button', { name: 'Delete Priya Sharma' }))
+    const confirm = await screen.findByRole('dialog', { name: 'Delete employee?' })
+    expect(confirm).toHaveTextContent('Priya Sharma')
+    await user.click(within(confirm).getByRole('button', { name: 'Delete' }))
+
+    await waitFor(() => expect(confirm).not.toBeInTheDocument())
+    expect(writeRequests()).toEqual([{ method: 'DELETE', path: '/employees/1', body: undefined }])
+    await waitFor(() => expect(employeesRequests().length).toBeGreaterThan(listRequestsBefore))
+    expect(screen.getByText('Employee deleted')).toBeInTheDocument()
   })
 })

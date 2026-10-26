@@ -1,15 +1,20 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
+import Snackbar from '@mui/material/Snackbar'
 import Stack from '@mui/material/Stack'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { DataGrid, type GridColDef, type GridPaginationModel } from '@mui/x-data-grid'
+import { DataGrid, GridActionsCellItem, type GridColDef, type GridPaginationModel } from '@mui/x-data-grid'
 import { listEmployees, type Employee, type EmployeeFilters } from '../api/employees'
-import { countryName, formatSalary } from '../format'
+import { countryName, employmentTypeLabel, formatSalary } from '../format'
 import { useDebouncedValue } from '../hooks/useDebouncedValue'
+import { DeleteIcon, EditIcon } from '../icons'
+import DeleteEmployeeDialog from './DeleteEmployeeDialog'
 import EmployeeFiltersToolbar from './EmployeeFiltersToolbar'
+import EmployeeFormDialog from './EmployeeFormDialog'
 
-const columns: GridColDef<Employee>[] = [
+const dataColumns: GridColDef<Employee>[] = [
   { field: 'full_name', headerName: 'Name', flex: 1, minWidth: 160 },
   { field: 'email', headerName: 'Email', flex: 1, minWidth: 200 },
   { field: 'job_title', headerName: 'Job title', flex: 1, minWidth: 140 },
@@ -24,7 +29,7 @@ const columns: GridColDef<Employee>[] = [
     field: 'employment_type',
     headerName: 'Employment type',
     minWidth: 140,
-    valueFormatter: (value: string) => value.replace('_', ' '),
+    valueFormatter: (value: string) => employmentTypeLabel(value),
   },
   {
     field: 'annual_salary',
@@ -67,9 +72,55 @@ export default function EmployeesPage() {
     placeholderData: keepPreviousData,
   })
 
+  // null: dialog closed; 'new': adding; an employee: editing them.
+  const [formTarget, setFormTarget] = useState<Employee | 'new' | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<Employee | null>(null)
+  const [confirmation, setConfirmation] = useState<string | null>(null)
+
+  const handleSaved = (message: string) => {
+    setFormTarget(null)
+    setConfirmation(message)
+  }
+
+  const handleDeleted = () => {
+    setDeleteTarget(null)
+    setConfirmation('Employee deleted')
+  }
+
+  const columns = useMemo<GridColDef<Employee>[]>(
+    () => [
+      ...dataColumns,
+      {
+        field: 'actions',
+        type: 'actions',
+        headerName: 'Actions',
+        getActions: ({ row }) => [
+          <GridActionsCellItem
+            key="edit"
+            icon={<EditIcon />}
+            label={`Edit ${row.full_name}`}
+            onClick={() => setFormTarget(row)}
+          />,
+          <GridActionsCellItem
+            key="delete"
+            icon={<DeleteIcon />}
+            label={`Delete ${row.full_name}`}
+            onClick={() => setDeleteTarget(row)}
+          />,
+        ],
+      },
+    ],
+    [],
+  )
+
   return (
     <Stack spacing={2}>
-      <EmployeeFiltersToolbar filters={filters} onChange={setFilters} />
+      <Stack direction="row" spacing={2} sx={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <EmployeeFiltersToolbar filters={filters} onChange={setFilters} />
+        <Button variant="contained" onClick={() => setFormTarget('new')} sx={{ flexShrink: 0 }}>
+          Add employee
+        </Button>
+      </Stack>
       {isError && <Alert severity="error">Could not load employees. Please try again.</Alert>}
       <Box sx={{ height: 640 }}>
         <DataGrid
@@ -85,6 +136,26 @@ export default function EmployeesPage() {
           disableColumnFilter
         />
       </Box>
+      {formTarget && (
+        <EmployeeFormDialog
+          employee={formTarget === 'new' ? undefined : formTarget}
+          onClose={() => setFormTarget(null)}
+          onSaved={handleSaved}
+        />
+      )}
+      {deleteTarget && (
+        <DeleteEmployeeDialog
+          employee={deleteTarget}
+          onClose={() => setDeleteTarget(null)}
+          onDeleted={handleDeleted}
+        />
+      )}
+      <Snackbar
+        open={confirmation !== null}
+        autoHideDuration={4000}
+        onClose={() => setConfirmation(null)}
+        message={confirmation}
+      />
     </Stack>
   )
 }

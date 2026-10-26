@@ -289,3 +289,25 @@ kept, and what was corrected.
   by running the real thing, which is why every task now ends with a
   manual check.
 - **Outcome:** 59 backend tests passing, ruff clean.
+
+## 2026-10-26 — Employee create, edit and delete (frontend)
+- **Tool / model:** Claude Code, Sonnet 4.6
+- **Prompt:** One form dialog for create and edit, delete confirmation,
+  row actions, per decision 018; no new dependencies; seven tests one at
+  a time. `validateEmployee` takes `today` as a parameter so tests are
+  deterministic.
+- **What happened:** All seven went red then green. The agent added two
+  tests my list missed (a 422 mapped to a field, and a 422 shown as a
+  general message) rather than leave that behaviour untested. It used
+  inline SVG icons instead of adding an icon library, keeping to the
+  no-new-dependencies rule. PATCH sends only changed fields; the fetch
+  client handles 204 responses and throws an `ApiError` with the parsed
+  body for field-level error mapping.
+- **Issue surfaced:** the backend CORS gap, fixed in a separate commit
+  (see the previous entry).
+- **Verified manually:** create, edit, delete (cancel and confirm) and
+  the duplicate-email error in a real browser.
+- **Known limitation:** the server checks "hire date not in the future"
+  in UTC, so between 00:00 and 05:30 IST a hire date of today is
+  rejected. Rare; noted rather than fixed.
+- **Outcome:** 20 frontend tests passing, oxlint clean, build succeeds.

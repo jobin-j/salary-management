@@ -1,4 +1,4 @@
-import { apiGet } from './client'
+import { apiGet, apiSend } from './client'
 
 export type EmploymentType = 'full_time' | 'part_time' | 'contract'
 
@@ -51,4 +51,20 @@ export function listEmployees(params: ListEmployeesParams): Promise<EmployeeList
     if (value) query[key] = value
   }
   return apiGet<EmployeeListResponse>('/employees', query)
+}
+
+/** An employee as sent to the API: the server derives `id` and `currency`. */
+export type EmployeeInput = Omit<Employee, 'id' | 'currency'>
+
+export function createEmployee(input: EmployeeInput): Promise<Employee> {
+  return apiSend<Employee>('POST', '/employees', input)
+}
+
+/** PATCHes only the given fields; the rest stay as they are. */
+export function updateEmployee(id: number, changes: Partial<EmployeeInput>): Promise<Employee> {
+  return apiSend<Employee>('PATCH', `/employees/${id}`, changes)
+}
+
+export function deleteEmployee(id: number): Promise<void> {
+  return apiSend<void>('DELETE', `/employees/${id}`)
 }

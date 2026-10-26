@@ -5,6 +5,10 @@ export function countryName(code: string) {
   return regionNames.of(code) ?? code
 }
 
+export function employmentTypeLabel(value: string) {
+  return value.replace('_', ' ')
+}
+
 export function formatSalary(amount: number, currency: string) {
   return new Intl.NumberFormat(navigator.language, {
     style: 'currency',
