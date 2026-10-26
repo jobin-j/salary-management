@@ -19,13 +19,13 @@ Replace ACME's spreadsheet-based salary management with a web application that l
 - Employee fields: full name, email (unique), job title, department,
   country, currency (derived from country), employment type
   (full-time / part-time / contract), annual salary, hire date.
-  *(Pending confirmation — Q3)*
+  *(Assumed — Q3, see Open questions)*
 - Salary is stored in the employee's local currency (ISO 4217 code).
 
 ### 2. Salary insights
 - **By country:** headcount, minimum, maximum, average and median salary, in local currency.
 - **By job title within a country:** the same metrics, so the HR Manager can compare roles fairly.
-- *(Scope pending confirmation — Q2)*
+- *(Assumed — Q2, see Open questions)*
 
 ### 3. Seed data
 - A seed script that generates 10,000 realistic employees across several countries.
@@ -35,11 +35,11 @@ Replace ACME's spreadsheet-based salary management with a web application that l
 
 | Left out | Reason |
 |---|---|
-| Currency conversion / cross-country totals | Comparing salaries within a country is accurate; FX conversion adds rate-source and date decisions that change the answer. *(Pending — Q1)* |
-| Authentication & roles | Single trusted persona; a production deployment would sit behind company SSO. *(Pending — Q4)* |
-| Salary history / audit trail | Current salary answers the stated problem; history changes the data model significantly. *(Pending — Q5)* |
+| Currency conversion / cross-country totals | Comparing salaries within a country is accurate; FX conversion adds rate-source and date decisions that change the answer. *(Assumed — Q1, see Open questions)* |
+| Authentication & roles | Single trusted persona; a production deployment would sit behind company SSO. *(Assumed — Q4, see Open questions)* |
+| Salary history / audit trail | Current salary answers the stated problem; history changes the data model significantly. *(Assumed — Q5, see Open questions)* |
 | Excel import / export | Valuable for migrating off spreadsheets, but not required to demonstrate the core. First candidate for a follow-up. |
-| Natural-language (AI) querying | Hard to test deterministically and needs query-safety guardrails; structured insights answer the core questions reliably. *(Pending — Q2)* |
+| Natural-language (AI) querying | Hard to test deterministically and needs query-safety guardrails; structured insights answer the core questions reliably. *(Assumed — Q2, see Open questions)* |
 
 ## Success criteria
 - The employee list returns any page, search or filter combination quickly (target: under 300 ms) with 10,000 employees.
@@ -48,4 +48,9 @@ Replace ACME's spreadsheet-based salary management with a web application that l
 - The application is deployed, seeded with 10,000 employees, and demonstrated in a video.
 
 ## Open questions
-Sent to Incubyte on 22 Oct 2026: currency handling (Q1), expected insights (Q2), mandatory employee fields (Q3), authentication (Q4), salary history (Q5), submission timeline (Q6). This document will be updated once answers arrive.
+Sent to Incubyte on 22 Oct 2026: currency handling (Q1), expected
+insights (Q2), mandatory employee fields (Q3), authentication (Q4),
+salary history (Q5), submission timeline (Q6). No reply had arrived by
+23 Oct, so I proceeded on the assumptions marked above and sent them to
+Incubyte in a follow-up email that day, asking them to flag any they
+disagreed with. No reply as of 26 Oct; the assumptions stand.
