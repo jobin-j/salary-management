@@ -106,7 +106,7 @@ cd backend
 uv run pytest
 uv run ruff check .
 
-# Frontend: 30 tests
+# Frontend: 34 tests
 cd ../frontend
 npm test
 npm run lint
