@@ -121,7 +121,7 @@ function SuggestField({ label, value, suggestions, error, onChange }: SuggestFie
       options={suggestions}
       inputValue={value}
       onInputChange={(_, newValue) => onChange(newValue)}
-      renderInput={(params) => <TextField {...params} label={label} error={!!error} helperText={error} />}
+      renderInput={(params) => <TextField {...params} label={label} required error={!!error} helperText={error} />}
     />
   )
 }
@@ -133,6 +133,9 @@ export default function EmployeeFormDialog({ employee, onClose, onSaved }: Props
   const [errors, setErrors] = useState<EmployeeFormErrors>({})
   const [formError, setFormError] = useState<string | null>(null)
   const errorProps = (field: keyof EmployeeFormValues) => ({ error: !!errors[field], helperText: errors[field] })
+
+  // Saving an edit with nothing changed would send an empty PATCH.
+  const unchanged = employee !== undefined && Object.keys(changedFields(toInput(values), employee)).length === 0
 
   const currency = options?.countries.find((c) => c.code === values.country)?.currency ?? ''
 
@@ -170,12 +173,14 @@ export default function EmployeeFormDialog({ employee, onClose, onSaved }: Props
             {formError && <Alert severity="error">{formError}</Alert>}
             <TextField
               label="Full name"
+              required
               value={values.full_name}
               onChange={(e) => set('full_name')(e.target.value)}
               {...errorProps('full_name')}
             />
             <TextField
               label="Email"
+              required
               type="email"
               value={values.email}
               onChange={(e) => set('email')(e.target.value)}
@@ -199,6 +204,7 @@ export default function EmployeeFormDialog({ employee, onClose, onSaved }: Props
               <TextField
                 select
                 label="Country"
+                required
                 value={values.country}
                 onChange={(e) => set('country')(e.target.value)}
                 {...errorProps('country')}
@@ -221,6 +227,7 @@ export default function EmployeeFormDialog({ employee, onClose, onSaved }: Props
             <TextField
               select
               label="Employment type"
+              required
               value={values.employment_type}
               onChange={(e) => set('employment_type')(e.target.value)}
               {...errorProps('employment_type')}
@@ -233,6 +240,7 @@ export default function EmployeeFormDialog({ employee, onClose, onSaved }: Props
             </TextField>
             <TextField
               label="Annual salary"
+              required
               type="number"
               value={values.annual_salary}
               onChange={(e) => set('annual_salary')(e.target.value)}
@@ -240,6 +248,7 @@ export default function EmployeeFormDialog({ employee, onClose, onSaved }: Props
             />
             <TextField
               label="Hire date"
+              required
               type="date"
               value={values.hire_date}
               onChange={(e) => set('hire_date')(e.target.value)}
@@ -250,7 +259,7 @@ export default function EmployeeFormDialog({ employee, onClose, onSaved }: Props
         </DialogContent>
         <DialogActions>
           <Button onClick={onClose}>Cancel</Button>
-          <Button type="submit" variant="contained" loading={mutation.isPending}>
+          <Button type="submit" variant="contained" loading={mutation.isPending} disabled={unchanged}>
             Save
           </Button>
         </DialogActions>

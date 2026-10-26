@@ -3,8 +3,13 @@
 How AI tools were used in this project: what was asked, what was
 kept, and what was corrected.
 
+> **Model attribution:** verified with Claude Code's `/stats` on 26 Oct.
+> Sonnet 4.6 was used on 22 Oct; the default then switched to Opus 5.5,
+> used for all later work (about 82% of tokens). A small share (about 2%)
+> ran on Sonnet 5 and can't be attributed to a specific task.
+
 ## 2026-10-22 — Requirements doc
-- **Tool / model:** Claude (chat), Sonnet
+- **Tool / model:** Claude (chat)
 - **Prompt:** Draft a one-page requirements doc from the brief, with
   open questions marked as pending.
 - **Outcome:** Kept structure. Removed "payroll, tax, benefits" from
@@ -97,7 +102,7 @@ kept, and what was corrected.
   Behaviour the tests can't see needs a manual check.
 
 ## 2026-10-23 — Employee list (GET /employees)
-- **Tool / model:** Claude Code, Sonnet 4.6
+- **Tool / model:** Claude Code, Opus 5.5
 - **Prompt:** Paginated, filterable GET /employees per decision 011:
   page/page_size (max 100), case-insensitive name search, exact filters
   on country/department/job_title, indexes on filtered columns. Six
@@ -125,7 +130,7 @@ kept, and what was corrected.
   Linter defaults vary by version; ruff's own output settled it.
 
 ## 2026-10-23 — Read, update, delete (GET / PATCH / DELETE /employees/{id})
-- **Tool / model:** Claude Code, Sonnet 4.6
+- **Tool / model:** Claude Code, Opus 5.5
 - **Prompt:** 12 behaviours per decision 012, one at a time. Included a
   test for explicit null on PATCH, anticipating that a null would hit
   the NOT NULL constraint and be misreported as a duplicate email.
@@ -135,9 +140,12 @@ kept, and what was corrected.
   email on PATCH) so `EmailStr` on update is covered; kept it.
 - **Refactors:** Hire-date rule became one shared `HireDate` type used by
   create and update; country lookup became a shared `_currency_for()`.
-- **Corrections made:** Agent's proposed commit message credited
-  "Claude Opus 5.5"; Claude Code ran on Sonnet 4.6. Dropped the trailer;
-  AI involvement is documented here instead.
+- **Model attribution:** the agent's proposed commit message credited
+  "Claude Opus 5.5". At the time I wrongly treated this as an error,
+  assuming the session still ran Sonnet 4.6; Claude Code's `/stats`
+  later confirmed it had switched to Opus 5.5 by then. The agent was
+  right. The trailer was left out regardless, since this log records AI
+  involvement.
 - **Trade-off noted:** Update fields use `str = None` (non-nullable type,
   None default) so explicit null fails validation while omitted fields
   stay unset. A type checker would flag it; the alternative was a model
@@ -145,7 +153,7 @@ kept, and what was corrected.
 - **Outcome:** 29 tests passing, ruff clean.
 
 ## 2026-10-23 — Seed script (10,000 employees)
-- **Tool / model:** Claude Code, Sonnet 4.6
+- **Tool / model:** Claude Code, Opus 5.5
 - **Prompt:** Pure `generate_employees(count, seed)` plus `seed_database`
   per decision 013; six tests one at a time. Required a fixed reference
   date instead of `date.today()` so output stays deterministic.
@@ -166,7 +174,7 @@ kept, and what was corrected.
   0.14s (target: under 5s).
 
 ## 2026-10-23 — Salary insights (per country, per job title)
-- **Tool / model:** Claude Code, Sonnet 4.6
+- **Tool / model:** Claude Code, Opus 5.5
 - **Prompt:** Two insights endpoints per decision 014, with an
   employment-type filter (full-time by default); seven tests with exact
   expected numbers; then time both endpoints against 10,000 seeded
@@ -187,7 +195,7 @@ kept, and what was corrected.
 - **Outcome:** 43 tests passing, ruff clean.
 
 ## 2026-10-23 — CORS and filter options (GET /options)
-- **Tool / model:** Claude Code, Sonnet 4.6
+- **Tool / model:** Claude Code, Opus 5.5
 - **Prompt:** CORS origins from a `CORS_ORIGINS` env var via a testable
   parser, no wildcard; `GET /options` returning countries with
   currencies, departments, job titles and employment types, per
@@ -206,7 +214,7 @@ kept, and what was corrected.
 - **Outcome:** 50 tests passing, ruff clean.
 
 ## 2026-10-23 — Employee table (frontend)
-- **Tool / model:** Claude Code, Sonnet 4.6
+- **Tool / model:** Claude Code, Opus 5.5
 - **Prompt:** Server-paginated MUI DataGrid with a custom filter toolbar
   and debounced search, per decision 016. Six behaviours, one at a time,
   with `fetch` stubbed and a fresh QueryClient (retries off) per test.
@@ -227,7 +235,7 @@ kept, and what was corrected.
 - **Outcome:** 7 frontend tests passing, oxlint clean, build succeeds.
 
 ## 2026-10-26 — Deployment readiness (Neon Postgres, Vercel)
-- **Tool / model:** Claude Code, Sonnet 4.6
+- **Tool / model:** Claude Code, Opus 5.5
 - **Prompt:** Add the psycopg driver; normalise `DATABASE_URL` test-first
   (Neon's `postgresql://` would otherwise select a different driver);
   `NullPool` with pre-ping for Postgres only; minimal Vercel config with
@@ -273,7 +281,7 @@ kept, and what was corrected.
   (API: https://salary-management-weld.vercel.app).
 
 ## 2026-10-26 — CORS for write requests (backend fix)
-- **Tool / model:** Claude Code, Sonnet 4.6
+- **Tool / model:** Claude Code, Opus 5.5
 - **Found by:** the agent, while building the employee forms. Decision
   015 (my chat advisor's design) set only `allow_origins`; Starlette's
   defaults then allow only GET and no request headers, so the browser's
@@ -291,7 +299,7 @@ kept, and what was corrected.
 - **Outcome:** 59 backend tests passing, ruff clean.
 
 ## 2026-10-26 — Employee create, edit and delete (frontend)
-- **Tool / model:** Claude Code, Sonnet 4.6
+- **Tool / model:** Claude Code, Opus 5.5
 - **Prompt:** One form dialog for create and edit, delete confirmation,
   row actions, per decision 018; no new dependencies; seven tests one at
   a time. `validateEmployee` takes `today` as a parameter so tests are
@@ -313,7 +321,7 @@ kept, and what was corrected.
 - **Outcome:** 20 frontend tests passing, oxlint clean, build succeeds.
 
 ## 2026-10-26 — Newest-first list and ID column
-- **Tool / model:** Claude Code, Sonnet 4.6
+- **Tool / model:** Claude Code, Opus 5.5
 - **Origin:** found while manually testing the forms. A new employee
   landed on the last page (around page 500), so the HR manager couldn't
   see what they had just added. Recorded as decision 019, superseding
@@ -330,7 +338,7 @@ kept, and what was corrected.
   and build clean.
 
 ## 2026-10-26 — Insights page, tab navigation, bundle size
-- **Tool / model:** Claude Code, Sonnet 4.6
+- **Tool / model:** Claude Code, Opus 5.5
 - **Prompt:** Country summary table with employment-type selector and
   job-title drill-down, loading/empty/error states, and lazy-loaded
   Employees/Insights tabs, per decision 020. Seven tests one at a time.
@@ -350,3 +358,26 @@ kept, and what was corrected.
   errors.
 - **Outcome:** 30 frontend tests passing, oxlint clean, build succeeds
   with no warning.
+
+## 2026-10-26 — Edit dialog Save state, required-field markers
+- **Tool / model:** Claude Code, Opus 5.5
+- **Origin:** found while manually testing. An unchanged edit still
+  enabled Save, which sent an empty PATCH and showed "Employee updated".
+- **Prompt:** Disable Save in the edit dialog until a value differs from
+  the original employee; keep create's Save enabled (missing fields are
+  reported on click, which tells the user what's missing, unlike a
+  disabled button); mark required fields with MUI's `required`. Four
+  tests, one at a time.
+- **What happened:** Tests 1 and 4 went red then green. Tests 2 and 3
+  passed on first run; the agent proved each by briefly breaking the
+  code (a sticky "touched" flag failed test 2; disabling an untouched
+  create form failed test 3), then reverting. The comparison reuses
+  `changedFields`, so Save is enabled exactly when the PATCH would be
+  non-empty.
+- **Knock-on:** `required` adds " *" to label text, breaking four
+  `getByLabelText('Hire date')` queries; changed to `/^Hire date/`.
+  Role-based queries were unaffected (the asterisk is aria-hidden).
+- **Verified manually:** in the browser, Save starts disabled, enables
+  on a change and disables again when the change is reverted; required
+  labels show an asterisk.
+- **Outcome:** 34 frontend tests passing, oxlint clean, build succeeds.

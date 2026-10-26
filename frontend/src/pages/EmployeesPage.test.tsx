@@ -84,13 +84,19 @@ async function fillNewEmployee(user: UserEvent, dialog: HTMLElement) {
   await chooseOption(user, dialog, 'Country', 'United States')
   await chooseOption(user, dialog, 'Employment type', 'part time')
   await user.type(within(dialog).getByRole('spinbutton', { name: 'Annual salary' }), '90000')
-  await user.type(within(dialog).getByLabelText('Hire date'), '2024-01-15')
+  await user.type(within(dialog).getByLabelText(/^Hire date/), '2024-01-15')
 }
 
 async function openAddDialog(user: UserEvent) {
   await screen.findByText('Priya Sharma')
   await user.click(screen.getByRole('button', { name: 'Add employee' }))
   return screen.findByRole('dialog', { name: 'Add employee' })
+}
+
+async function openEditDialog(user: UserEvent) {
+  await screen.findByText('Priya Sharma')
+  await user.click(screen.getByRole('button', { name: 'Edit Priya Sharma' }))
+  return screen.findByRole('dialog', { name: 'Edit employee' })
 }
 
 function lastEmployeesQuery() {
@@ -235,7 +241,7 @@ describe('EmployeesPage', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Save' }))
 
     await waitFor(() =>
-      expect(within(dialog).getByLabelText('Hire date')).toHaveAccessibleDescription(
+      expect(within(dialog).getByLabelText(/^Hire date/)).toHaveAccessibleDescription(
         'Value error, hire_date cannot be in the future',
       ),
     )
@@ -263,7 +269,7 @@ describe('EmployeesPage', () => {
     expect(within(dialog).getByRole('textbox', { name: 'Full name' })).toHaveValue('Priya Sharma')
     expect(within(dialog).getByRole('combobox', { name: 'Department' })).toHaveValue('Engineering')
     expect(within(dialog).getByRole('combobox', { name: 'Country' })).toHaveTextContent('India')
-    expect(within(dialog).getByLabelText('Hire date')).toHaveValue('2022-04-01')
+    expect(within(dialog).getByLabelText(/^Hire date/)).toHaveValue('2022-04-01')
 
     const salary = within(dialog).getByRole('spinbutton', { name: 'Annual salary' })
     expect(salary).toHaveValue(1500000)
@@ -274,6 +280,56 @@ describe('EmployeesPage', () => {
     await waitFor(() => expect(dialog).not.toBeInTheDocument())
     expect(writeRequests()).toEqual([{ method: 'PATCH', path: '/employees/1', body: { annual_salary: 1600000 } }])
     expect(screen.getByText('Employee updated')).toBeInTheDocument()
+  })
+
+  it('disables Save in the edit dialog until a field changes', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    const dialog = await openEditDialog(user)
+
+    expect(within(dialog).getByRole('button', { name: 'Save' })).toBeDisabled()
+  })
+
+  it('enables Save when a field changes and disables it again when changed back', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    const dialog = await openEditDialog(user)
+    const save = within(dialog).getByRole('button', { name: 'Save' })
+    const name = within(dialog).getByRole('textbox', { name: 'Full name' })
+
+    await user.type(name, 'x')
+    expect(save).toBeEnabled()
+
+    await user.type(name, '{Backspace}')
+    expect(save).toBeDisabled()
+  })
+
+  it('keeps Save enabled in an empty add dialog', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    const dialog = await openAddDialog(user)
+
+    expect(within(dialog).getByRole('button', { name: 'Save' })).toBeEnabled()
+  })
+
+  it('marks every field except the derived currency as required', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    const dialog = await openAddDialog(user)
+
+    for (const [role, name] of [
+      ['textbox', 'Full name'],
+      ['textbox', 'Email'],
+      ['combobox', 'Job title'],
+      ['combobox', 'Department'],
+      ['combobox', 'Country'],
+      ['combobox', 'Employment type'],
+      ['spinbutton', 'Annual salary'],
+    ]) {
+      expect(within(dialog).getByRole(role, { name })).toBeRequired()
+    }
+    expect(within(dialog).getByLabelText(/^Hire date/)).toBeRequired()
+    expect(within(dialog).getByRole('textbox', { name: 'Currency' })).not.toBeRequired()
   })
 
   it('shows the chosen country’s currency read-only', async () => {
