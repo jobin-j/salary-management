@@ -204,3 +204,24 @@ kept, and what was corrected.
   rather than falling back to the default. This fails closed, which is
   the safe direction.
 - **Outcome:** 50 tests passing, ruff clean.
+
+## 2026-10-23 — Employee table (frontend)
+- **Tool / model:** Claude Code, Sonnet 4.6
+- **Prompt:** Server-paginated MUI DataGrid with a custom filter toolbar
+  and debounced search, per decision 016. Six behaviours, one at a time,
+  with `fetch` stubbed and a fresh QueryClient (retries off) per test.
+  Called out two common server-table bugs up front: 0-based grid pages
+  vs the API's 1-based pages, and not resetting to page 1 on filter
+  change.
+- **What happened:** All six tests went red then green. The agent reset
+  the page only when the filters actually sent to the API change (after
+  the debounce), avoiding a wasted request per keystroke. Search
+  placeholder says "Name" because the API only searches names.
+- **Verified manually:** ran the real backend (10,000 seeded employees)
+  and frontend together: full total shown, country filter and search
+  work, pagination moves through pages, and CORS works between the two
+  servers.
+- **Noted, left as is:** production bundle is ~305 kB gzipped (DataGrid
+  is most of it). Acceptable for an internal tool; code-splitting comes
+  with navigation.
+- **Outcome:** 7 frontend tests passing, oxlint clean, build succeeds.
