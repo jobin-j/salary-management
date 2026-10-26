@@ -151,3 +151,20 @@
 - **Trade-off:** serverless cold starts of a few seconds after idle.
   `create_all` runs on each cold start, which is safe because it only
   creates missing tables.
+
+## 018 — Employee forms: one dialog for create and edit, no form library
+- **One `EmployeeFormDialog`** for create and edit (edit pre-fills it);
+  an "Add employee" button in the toolbar; edit and delete actions per
+  row; delete asks for confirmation.
+- **No form library:** eight fields fit plain React state plus a tested
+  `validateEmployee` function. Would adopt react-hook-form if forms grew.
+- **Validation:** client checks mirror the server (required fields,
+  email format, salary > 0, hire date not in the future) for instant
+  feedback; server errors (409 duplicate email, 422) map onto the
+  matching fields. The server remains the authority.
+- **Inputs:** country select from `/options` with the derived currency
+  shown read-only; department and job title accept free text with
+  suggestions from `/options`; native date input (no date-picker
+  dependency).
+- **Edit sends only changed fields** (PATCH). After any change, the
+  employee list and options are refreshed and a confirmation appears.
