@@ -192,3 +192,14 @@
 - **Navigation:** MUI tabs (Employees / Insights), no router. Insights
   is lazy-loaded, which also splits the bundle. Trade-off: no shareable
   link per page; acceptable for a two-page internal tool.
+
+## 021 — Bundle size: one main chunk, warning limit raised
+- **Measured:** main chunk ~1,035 kB (~313 kB gzipped), mostly MUI and
+  the DataGrid on the default page. Lazy-loading Insights (decision 020)
+  only moved ~6 kB, so it didn't address the warning.
+- **Tried:** a manual vendor split (React / MUI core / DataGrid). It
+  passed tests and the build but crashed at runtime in the production
+  preview (chunk load order). Reverted.
+- **Decision:** `chunkSizeWarningLimit` set just above the main chunk,
+  with a comment. ~313 kB gzipped is acceptable for an internal tool.
+- **Revisit if load time matters:** lazy-load the DataGrid itself.

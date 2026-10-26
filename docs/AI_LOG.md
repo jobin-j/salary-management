@@ -328,3 +328,25 @@ kept, and what was corrected.
   page 1.
 - **Outcome:** 60 backend and 21 frontend tests passing; ruff, oxlint
   and build clean.
+
+## 2026-10-26 — Insights page, tab navigation, bundle size
+- **Tool / model:** Claude Code, Sonnet 4.6
+- **Prompt:** Country summary table with employment-type selector and
+  job-title drill-down, loading/empty/error states, and lazy-loaded
+  Employees/Insights tabs, per decision 020. Seven tests one at a time.
+- **Corrections made:**
+  1. Country rows were selectable by mouse only. Added keyboard
+     selection test first (Enter/Space, `aria-selected`).
+  2. In the real browser, focused rows had no visible focus indicator;
+     the test couldn't see this because jsdom doesn't render CSS. Added
+     a `:focus-visible` outline, verified manually.
+  3. A vendor chunk split (agent's suggestion, which I approved) passed
+     tests and the build but crashed the production preview with
+     `N is not a function`. Reverted; raised the warning limit with a
+     documented rationale instead (decision 021). My decision 020 had
+     wrongly implied lazy-loading would fix the bundle size.
+- **Verified manually:** production build via `vite preview`: both
+  tabs, drill-down by mouse and keyboard, visible focus, no console
+  errors.
+- **Outcome:** 30 frontend tests passing, oxlint clean, build succeeds
+  with no warning.
