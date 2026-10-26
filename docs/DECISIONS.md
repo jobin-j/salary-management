@@ -168,3 +168,14 @@
   dependency).
 - **Edit sends only changed fields** (PATCH). After any change, the
   employee list and options are refreshed and a confirmation appears.
+
+## 019 — Employee list newest first, with an ID column
+- **Supersedes the ordering in decision 011** (id ascending).
+- **Why:** found in manual testing. A newly created employee landed on
+  the last page (around page 500), invisible to the HR manager who had
+  just added them. Ordering by id descending shows recent additions
+  first and stays deterministic.
+- **ID column** first in the table: an unambiguous reference when two
+  employees share a name.
+- **Trade-off:** no user-selectable sorting yet; that would need a sort
+  parameter in the API.
