@@ -133,3 +133,21 @@
   country names via `Intl.DisplayNames`, with no hard-coded name list.
 - **Tests:** stub `fetch`, so tests exercise the API client too, without
   adding a mocking library.
+
+## 017 — Deployment: Vercel (frontend and backend) and Neon Postgres
+- **Frontend:** Vercel project rooted at `frontend/`; `VITE_API_URL`
+  points to the deployed backend.
+- **Backend:** separate Vercel project rooted at `backend/`, running
+  FastAPI as a Python serverless function.
+- **Database:** Neon Postgres (free tier, no expiry), via its pooled
+  connection URL in `DATABASE_URL`, since serverless functions may open
+  a connection per request. Needs a Postgres driver (psycopg).
+- **CORS:** `CORS_ORIGINS` set to the frontend's Vercel URL.
+- **Seeding:** run the seed script once from a laptop against the Neon
+  `DATABASE_URL`.
+- **Alternatives considered:** free Render (about a minute to wake after
+  15 idle minutes; free Postgres expires after 30 days); paid Render
+  ($7/month, always on).
+- **Trade-off:** serverless cold starts of a few seconds after idle.
+  `create_all` runs on each cold start, which is safe because it only
+  creates missing tables.
