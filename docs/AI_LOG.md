@@ -246,3 +246,28 @@ kept, and what was corrected.
 - **Accepted:** pinned Python 3.12 locally so tests run on the same
   version as production; updated CLAUDE.md to match.
 - **Outcome:** 58 tests passing on Python 3.12.15, ruff clean.
+
+## 2026-10-26 — Deployment (Neon Postgres, Vercel)
+- **Tool:** Claude (chat) for the deployment plan and step-by-step
+  review; all steps performed by hand. The coding agent was deliberately
+  given no access to cloud accounts or the database credentials.
+- **Setup:** Neon Postgres (Singapore, pooled connection); backend and
+  frontend as two Vercel projects from the same repo (backend function
+  region sin1, matching the database).
+- **Secrets:** the database URL never went to Claude Code or into the
+  repo. It was entered in Vercel's settings and, for seeding, typed at
+  a hidden terminal prompt (`read -s`) so it stayed out of shell
+  history. A `git diff --cached | grep neon.tech` check confirmed no URL
+  was staged.
+- **Steps:** seeded 10,000 employees into Neon from the laptop (0.99s);
+  deployed the backend and verified `/health` and `/employees` in a
+  private window (total 10,000); deployed the frontend with
+  `VITE_API_URL`; set `CORS_ORIGINS` to the frontend's address on the
+  backend and redeployed.
+- **Issues avoided:** used the production domain rather than a
+  deployment-specific URL, which Vercel protects behind a login by
+  default, so reviewers would have hit a login page. Skipped Neon's
+  optional Auth and Data API to keep the database's attack surface
+  minimal.
+- **Outcome:** live at https://salary-management-app-ivory.vercel.app
+  (API: https://salary-management-weld.vercel.app).
