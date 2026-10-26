@@ -5,7 +5,7 @@ Salary management web app for an HR Manager handling ~10,000 employees across mu
 Read `docs/REQUIREMENTS.md` for scope and `docs/DECISIONS.md` for decisions already made. Do not build anything listed as out of scope.
 
 ## Stack
-- **Backend** (`backend/`): Python 3.11, FastAPI, SQLAlchemy 2.0, Pydantic v2, pytest. Packages managed with **uv**.
+- **Backend** (`backend/`): Python 3.12, FastAPI, SQLAlchemy 2.0, Pydantic v2, psycopg 3, pytest. Packages managed with **uv**. Deployed to Vercel (region sin1) against Neon Postgres.
 - **Database:** SQLite locally and in tests; Postgres in deployment (via `DATABASE_URL`).
 - **Frontend** (`frontend/`): Vite + React + TypeScript, MUI + MUI X DataGrid, TanStack Query, Vitest + React Testing Library.
 

@@ -225,3 +225,24 @@ kept, and what was corrected.
   is most of it). Acceptable for an internal tool; code-splitting comes
   with navigation.
 - **Outcome:** 7 frontend tests passing, oxlint clean, build succeeds.
+
+## 2026-10-26 — Deployment readiness (Neon Postgres, Vercel)
+- **Tool / model:** Claude Code, Sonnet 4.6
+- **Prompt:** Add the psycopg driver; normalise `DATABASE_URL` test-first
+  (Neon's `postgresql://` would otherwise select a different driver);
+  `NullPool` with pre-ping for Postgres only; minimal Vercel config with
+  the function region in Singapore, per decision 017. The database URL
+  was kept out of the agent's context entirely.
+- **What happened:** Normaliser and `make_engine` added with tests.
+  The agent checked Vercel's current docs: only `regions: ["sin1"]` was
+  needed, and Vercel installs from `uv.lock`, so no requirements.txt.
+  It flagged that Vercel runs Python 3.12–3.14, not the local 3.11.
+- **Corrections made:** The agent flagged the httpx2 dev dependency as a
+  possible typosquat and recommended replacing it. Checked the sources:
+  httpx2 is the Pydantic-maintained continuation of httpx, published by
+  httpx's original author, and is what Starlette's TestClient requests.
+  Kept it. (I had doubted httpx2 on day one too; both times the real
+  sources settled it.)
+- **Accepted:** pinned Python 3.12 locally so tests run on the same
+  version as production; updated CLAUDE.md to match.
+- **Outcome:** 58 tests passing on Python 3.12.15, ruff clean.
